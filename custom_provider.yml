@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Custom resource lambda provider
+
+Resources:
+  MyRoleTagsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: cfn_custom_provider.handler
+      Runtime: python3.7
+      Role: !GetAtt LambdaRole.Arn
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      RoleName: cfn-custom-provider-lambda-role
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  LambdaIamPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: my-lambda-iam-policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - iam:ListRoleTags
+              - iam:TagRole
+              - iam:UntagRole
+            Resource: '*'
+      Roles:
+        - !Ref LambdaRole
+
+Outputs:
+  MyRoleTagsLambda:
+    Value: !GetAtt MyRoleTagsFunction.Arn
+    Export:
+      Name: "MyRoleTagsLambda"
+
+
